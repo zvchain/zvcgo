@@ -18,8 +18,15 @@ const (
 	ZVC = 1000000000
 )
 
-type Address struct {
-}
+const (
+	AddressLength = 32 //Length of Address( golang.SHA3，256-bit)
+	HashLength    = 32 //Length of Hash (golang.SHA3, 256-bit)。
+)
+
+//type Address struct {
+//}
+// Address data struct
+type Address [AddressLength]byte
 
 func NewAddressFromString(s string) (Address, error) {
 	return Address{}, nil
@@ -86,8 +93,11 @@ func (a Asset) Ra() uint64 {
 	return 0
 }
 
-type Hash struct {
-}
+//type Hash struct {
+//}
+
+// Hash data struct (256-bits)
+type Hash [HashLength]byte
 
 func (h Hash) Bytes() []byte {
 	return nil

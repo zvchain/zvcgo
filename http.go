@@ -15,14 +15,14 @@ var (
 	ErrInternal    = fmt.Errorf("internal error")
 )
 
-// Result is rpc request successfully returns the variable parameter
+// Result is rpc requestGzv successfully returns the variable parameter
 type Result struct {
 	Message string      `json:"message"`
 	Status  int         `json:"status"`
 	Data    interface{} `json:"data"`
 }
 
-// RPCReqObj is complete rpc request body
+// RPCReqObj is complete rpc requestGzv body
 type RPCReqObj struct {
 	Method  string        `json:"method"`
 	Params  []interface{} `json:"params"`
@@ -38,7 +38,7 @@ type RPCResObj struct {
 	Error   *ErrorResult `json:"error,omitempty"`
 }
 
-// ErrorResult is rpc request error returned variable parameter
+// ErrorResult is rpc requestGzv error returned variable parameter
 type ErrorResult struct {
 	Message string `json:"message"`
 	Code    int    `json:"code"`
@@ -70,13 +70,13 @@ func failResult(err string) (*Result, error) {
 	}, nil
 }
 
-func (a *Api) request(method string, params ...interface{}) *Result {
-	if a.host == "" {
-		return opError(ErrUnConnected)
+func (api *Api) request(nameSpace, method string, data interface{}, params ...interface{}) error {
+	if api.host == "" {
+		return fmt.Errorf("ErrUnConnected")
 	}
 
 	param := RPCReqObj{
-		Method:  "Gzv_" + method,
+		Method:  nameSpace + "_" + method,
 		Params:  params[:],
 		ID:      1,
 		Jsonrpc: "2.0",
@@ -84,21 +84,27 @@ func (a *Api) request(method string, params ...interface{}) *Result {
 
 	paramBytes, err := json.Marshal(param)
 	if err != nil {
-		return opError(err)
+		return err
 	}
 
-	resp, err := http.Post(a.host, "application/json", bytes.NewReader(paramBytes))
+	resp, err := http.Post(api.host, "application/json", bytes.NewReader(paramBytes))
 	if err != nil {
-		return opError(err)
+		return err
 	}
 	defer resp.Body.Close()
 	responseBytes, err := ioutil.ReadAll(resp.Body)
 	ret := &RPCResObj{}
+	if data != nil {
+		ret.Result = &Result{
+			Data: data,
+		}
+	}
+
 	if err := json.Unmarshal(responseBytes, ret); err != nil {
-		return opError(err)
+		return err
 	}
 	if ret.Error != nil {
-		return opError(fmt.Errorf(ret.Error.Message))
+		return fmt.Errorf(ret.Error.Message)
 	}
-	return ret.Result
+	return nil
 }
