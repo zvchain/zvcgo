@@ -27,6 +27,7 @@ func (api Api) GetTransactionByHash(hash Hash) (*Transaction, error) {
 }
 
 func (api Api) BlockHeight() (uint64, error) {
+	api.request("blockHeight")
 	return 0, nil
 }
 
