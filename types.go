@@ -1,35 +1,65 @@
 package zvlib
 
 import (
+	"encoding/hex"
 	"errors"
 	"io"
+	"regexp"
 	"strconv"
 	"strings"
 )
 
 var (
-	InvalidAssetString = errors.New("invalid asset string")
+	ErrorInvalidAssetString   = errors.New("invalid asset string")
+	ErrorInvalidAddressString = errors.New("invalid address string")
+	ErrorInvalidPrivateKey    = errors.New("invalid private key")
+	ErrorInvalid0xString      = errors.New("invalid hex String")
+	ErrorSignerNotFound       = errors.New("signer not found")
+	ErrorSourceEmpty          = errors.New("source should not be empty")
 )
+
+const AddrPrefix = "zv"
+const AddressLength = 32
 
 const (
 	Ra  = 1
-	mRa = 1000
-	kRa = 1000000
+	kRa = 1000
+	mRa = 1000000
 	ZVC = 1000000000
 )
 
-const (
-	AddressLength = 32 //Length of Address( golang.SHA3，256-bit)
-	HashLength    = 32 //Length of Hash (golang.SHA3, 256-bit)。
-)
+type Address struct {
+	data []byte
+}
 
-//type Address struct {
-//}
-// Address data struct
-type Address [AddressLength]byte
+var addrReg = regexp.MustCompile("^[Zz][Vv][0-9a-fA-F]{64}$")
 
-func NewAddressFromString(s string) (Address, error) {
-	return Address{}, nil
+func ValidateAddress(addr string) bool {
+	return addrReg.MatchString(addr)
+}
+
+func NewAddressFromString(s string) (addr Address, err error) {
+	if !ValidateAddress(s) {
+		return Address{}, ErrorInvalidAddressString
+	}
+	addr.data, err = hex.DecodeString(s[2:])
+	return addr, err
+}
+
+func NewAddressFromBytes(bs []byte) (addr Address, err error) {
+	if len(bs) != AddressLength {
+		return addr, ErrorInvalidAddressString
+	}
+	addr.data = bs
+	return addr, err
+}
+
+func (a Address) String() string {
+	return AddrPrefix + hex.EncodeToString(a.data)
+}
+
+func (a Address) Bytes() []byte {
+	return a.data
 }
 
 type Asset struct {
@@ -49,7 +79,7 @@ func NewAssetFromString(s string) (Asset, error) {
 			continue
 		} else if b == '.' || (b >= '0' && b <= '9') {
 			if len(symbol) != 0 {
-				return Asset{}, InvalidAssetString
+				return Asset{}, ErrorInvalidAssetString
 			}
 			valuePart = append(valuePart, b)
 		} else if b >= 'a' && b <= 'z' {
@@ -60,7 +90,7 @@ func NewAssetFromString(s string) (Asset, error) {
 	}
 	value, err := strconv.ParseFloat(string(valuePart), 64)
 	if err != nil {
-		return Asset{}, InvalidAssetString
+		return Asset{}, ErrorInvalidAssetString
 	}
 	switch string(symbol) {
 	case "ra":
@@ -72,35 +102,33 @@ func NewAssetFromString(s string) (Asset, error) {
 	case "zvc":
 		asset.value = uint64(value * ZVC)
 	default:
-		return Asset{}, InvalidAssetString
+		return Asset{}, ErrorInvalidAssetString
 	}
 	return asset, nil
 }
 
 func (a Asset) ZVC() uint64 {
-	return 0
+	return a.value
 }
 
 func (a Asset) KRa() uint64 {
-	return 0
+	return a.value / kRa
 }
 
 func (a Asset) MRa() uint64 {
-	return 0
+	return a.value / mRa
 }
 
 func (a Asset) Ra() uint64 {
-	return 0
+	return a.value
 }
 
-//type Hash struct {
-//}
-
-// Hash data struct (256-bits)
-type Hash [HashLength]byte
+type Hash struct {
+	data []byte
+}
 
 func (h Hash) Bytes() []byte {
-	return nil
+	return h.data
 }
 
 type Event struct {

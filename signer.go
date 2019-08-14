@@ -1,26 +1,58 @@
 package zvlib
 
-import "math/big"
+import (
+	"math/big"
+)
 
 const SignLength = 65 //length of signature，32 bytes r & 32 bytes s & 1 byte recid.
 
 type KeyBag struct {
+	keys map[string]*Account
 }
 
-func (ws KeyBag) AvailableAddresses() []*Address {
+func (kb KeyBag) AvailableAddresses() []*Address {
+	pks := make([]*Address, 0)
+	for _, value := range kb.keys {
+		pks = append(pks, value.Address())
+	}
+	return pks
+}
+
+func (kb KeyBag) AvailablePublicKeys() []*PublicKey {
+	pks := make([]*PublicKey, 0)
+	for _, value := range kb.keys {
+		pks = append(pks, value.PublicKey())
+	}
+	return pks
+}
+
+func (kb *KeyBag) ImportPrivateKey(key []byte) (err error) {
+	account, err := NewAccount(key)
+	if err != nil {
+		return err
+	}
+	kb.keys[account.Address().String()] = account
 	return nil
 }
 
-func (ws KeyBag) AvailablePublicKeys() []*PublicKey {
-	return nil
+func (kb *KeyBag) ImportPrivateKeyFromString(k string) (err error) {
+	bs, err := Decode(k)
+	if err != nil {
+		return err
+	}
+	return kb.ImportPrivateKey(bs)
 }
 
-func (ws KeyBag) ImportPrivateKey() (err error) {
-	return nil
-}
-
-func (ws KeyBag) Sign(tx Transaction) (*Sign, error) {
-	return newSign(nil), nil
+func (ws KeyBag) Sign(tx RawTransaction) (*Sign, error) {
+	txr := tx.ToRawTransaction()
+	if txr.Source == nil {
+		return nil, ErrorSourceEmpty
+	}
+	account := ws.keys[txr.Source.String()]
+	if account == nil {
+		return nil, ErrorSignerNotFound
+	}
+	return account.Sign(tx)
 }
 
 type Signer interface {

@@ -50,5 +50,5 @@ func (m Wallet) DeriveAccount(index int) (*Account, error) {
 		return nil, err
 	}
 	privateKeyECDSA := privateKey.ToECDSA()
-	return NewAccount(privateKeyECDSA.D.Bytes()), nil
+	return NewAccount(privateKeyECDSA.D.Bytes())
 }
