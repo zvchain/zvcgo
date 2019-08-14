@@ -1,5 +1,7 @@
 package zvlib
 
+import ()
+
 type Transaction struct {
 	Data   []byte
 	Value  uint64
@@ -16,9 +18,16 @@ type Transaction struct {
 	Source    Address
 }
 
+func (t Transaction) ToRawTransaction() Transaction {
+	return t
+}
+
+func (t Transaction) GenHash() Hash {
+	return Hash{}
+}
+
 type RawTransaction interface {
 	ToRawTransaction() Transaction
-	GenHash() Hash
 }
 
 type TransferTransaction struct {

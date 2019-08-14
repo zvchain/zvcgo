@@ -27,7 +27,7 @@ func (a Account) Sign(tx RawTransaction) (*Sign, error) {
 		copy(seckbytes[32-len(pribytes):32], pribytes) //make sure that the length of seckey is 32 bytes
 	}
 
-	sig, err := secp256k1.Sign(tx.GenHash().Bytes(), seckbytes)
+	sig, err := secp256k1.Sign(tx.ToRawTransaction().GenHash().Bytes(), seckbytes)
 	if err != nil {
 		return nil, err
 	} else {

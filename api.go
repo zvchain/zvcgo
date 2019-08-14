@@ -22,6 +22,14 @@ func (api Api) GetBlockDetailByHeight(height uint64) (*BlockDetail, error) {
 	return nil, nil
 }
 
+func (api Api) GetBlockByHash(hash Hash) (*Block, error) {
+	return nil, nil
+}
+
+func (api Api) GetBlockDetailByHash(hash Hash) (*BlockDetail, error) {
+	return nil, nil
+}
+
 func (api Api) GetTransactionByHash(hash Hash) (*Transaction, error) {
 	return nil, nil
 }
@@ -67,4 +75,16 @@ func (api Api) EventListen(address Address, topic string, from uint64, callBack 
 	return nil
 }
 
+func (api Api) MinerInfo(address Address) error {
+	return nil
+}
+
+func (api Api) Balance(address Address) error {
+	return nil
+}
+
 type EventCallBack func(event *Event)
+
+func A(event *Event) {
+
+}
