@@ -43,16 +43,20 @@ func (kb *KeyBag) ImportPrivateKeyFromString(k string) (err error) {
 	return kb.ImportPrivateKey(bs)
 }
 
-func (ws KeyBag) Sign(tx RawTransaction) (*Sign, error) {
+func (kb KeyBag) Sign(tx RawTransaction) (*Sign, error) {
 	txr := tx.ToRawTransaction()
 	if txr.Source == nil {
 		return nil, ErrorSourceEmpty
 	}
-	account := ws.keys[txr.Source.String()]
+	account := kb.keys[txr.Source.String()]
 	if account == nil {
 		return nil, ErrorSignerNotFound
 	}
 	return account.Sign(tx)
+}
+
+func NewKeyBag() *KeyBag {
+	return &KeyBag{make(map[string]*Account)}
 }
 
 type Signer interface {

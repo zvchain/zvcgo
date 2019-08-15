@@ -12,24 +12,67 @@ type PrivateKey struct {
 	pk *ecdsa.PrivateKey
 }
 
+// String serialize private key to hex string
 func (key PrivateKey) String() string {
 	return Encode(key.pk.D.Bytes())
 }
 
+// Bytes serialize private key to bytes
+func (key PrivateKey) Bytes() []byte {
+	return key.pk.D.Bytes()
+}
+
 func (key PrivateKey) PublicKey() *PublicKey {
-	return &PublicKey{key.pk.D.Bytes()}
+	return &PublicKey{key.pk.PublicKey}
+}
+
+// ImportPrivateKey import private key by bytes of private key
+func (key *PrivateKey) ImportPrivateKey(privateKey []byte) (err error) {
+	key, err = NewPrivateKey(privateKey)
+	return err
+}
+
+func NewPrivateKey(privateKey []byte) (*PrivateKey, error) {
+	p := &PrivateKey{&ecdsa.PrivateKey{}}
+	var one = new(big.Int).SetInt64(1)
+
+	params := secp256k1.S256().Params()
+	d := new(big.Int).SetBytes(privateKey)
+	if d.Cmp(params.N) >= 0 || d.Cmp(one) < 0 {
+		return nil, ErrorInvalidPrivateKey
+	}
+
+	p.pk.Curve = secp256k1.S256()
+	p.pk.D = d
+	p.pk.PublicKey.X, p.pk.PublicKey.Y = p.pk.Curve.ScalarBaseMult(privateKey)
+	return p, nil
 }
 
 type PublicKey struct {
-	key []byte
+	key ecdsa.PublicKey
 }
 
-func (key PublicKey) String() string {
-	return Encode(key.key)
+// String serialize publicKey key to hex string
+func (pk PublicKey) String() string {
+	buf := elliptic.Marshal(pk.key.Curve, pk.key.X, pk.key.Y)
+	return Encode(buf)
+}
+
+func (pk PublicKey) Address() *Address {
+	x := pk.key.X.Bytes()
+	y := pk.key.Y.Bytes()
+	x = append(x, y...)
+
+	addrBuf := sha3.Sum256(x)
+	addr, err := NewAddressFromBytes(addrBuf[:])
+	if err != nil {
+		panic("error address length")
+	}
+	return &addr
 }
 
 type Account struct {
-	pk *ecdsa.PrivateKey
+	pk *PrivateKey
 }
 
 func NewAccountFromString(key string) (*Account, error) {
@@ -41,23 +84,12 @@ func NewAccountFromString(key string) (*Account, error) {
 }
 
 func NewAccount(privateKey []byte) (*Account, error) {
-	account := Account{&ecdsa.PrivateKey{}}
-	var one = new(big.Int).SetInt64(1)
-
-	params := secp256k1.S256().Params()
-	d := new(big.Int).SetBytes(privateKey)
-	if d.Cmp(params.N) >= 0 || d.Cmp(one) < 0 {
-		return nil, ErrorInvalidPrivateKey
-	}
-
-	account.pk.Curve = secp256k1.S256()
-	account.pk.D = d
-	account.pk.PublicKey.X, account.pk.PublicKey.Y = account.pk.Curve.ScalarBaseMult(privateKey)
-	return &account, nil
+	key, err := NewPrivateKey(privateKey)
+	return &Account{key}, err
 }
 
 func (a Account) Sign(tx RawTransaction) (*Sign, error) {
-	pribytes := a.pk.D.Bytes()
+	pribytes := a.pk.Bytes()
 	seckbytes := pribytes
 	if len(pribytes) < 32 {
 		seckbytes = make([]byte, 32)
@@ -73,19 +105,13 @@ func (a Account) Sign(tx RawTransaction) (*Sign, error) {
 }
 
 func (a Account) Address() *Address {
-	x := a.pk.PublicKey.X.Bytes()
-	y := a.pk.PublicKey.Y.Bytes()
-	x = append(x, y...)
-
-	addrBuf := sha3.Sum256(x)
-	addr, err := NewAddressFromBytes(addrBuf[:])
-	if err != nil {
-		panic("error address length")
-	}
-	return &addr
+	return a.PublicKey().Address()
 }
 
 func (a Account) PublicKey() *PublicKey {
-	buf := elliptic.Marshal(a.pk.PublicKey.Curve, a.pk.PublicKey.X, a.pk.PublicKey.Y)
-	return &PublicKey{buf}
+	return a.pk.PublicKey()
+}
+
+func (a Account) PrivateKey() *PrivateKey {
+	return a.pk
 }
