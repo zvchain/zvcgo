@@ -93,6 +93,7 @@ func (api *Api) request(nameSpace, method string, data interface{}, params ...in
 	}
 	defer resp.Body.Close()
 	responseBytes, err := ioutil.ReadAll(resp.Body)
+	fmt.Println("responseBytes", string(responseBytes))
 	ret := &RPCResObj{}
 	if data != nil {
 		ret.Result = &Result{

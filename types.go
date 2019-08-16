@@ -2,7 +2,9 @@ package zvlib
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"regexp"
 	"strconv"
@@ -14,12 +16,15 @@ var (
 	ErrorInvalidAddressString = errors.New("invalid address string")
 	ErrorInvalidPrivateKey    = errors.New("invalid private key")
 	ErrorInvalid0xString      = errors.New("invalid hex String")
+	ErrorInvalidZVString      = errors.New("invalid address String")
 	ErrorSignerNotFound       = errors.New("signer not found")
 	ErrorSourceEmpty          = errors.New("source should not be empty")
 )
 
 const AddrPrefix = "zv"
+const HashPrefix = "0x"
 const AddressLength = 32
+const Idlength = 32
 
 const (
 	Ra  = 1
@@ -60,6 +65,30 @@ func (a Address) String() string {
 
 func (a Address) Bytes() []byte {
 	return a.data
+}
+
+func (a *Address) UnmarshalJSON(input []byte) error {
+	js := string(input)
+	js = js[1 : len(js)-1]
+	data, err := DecodeZV(js)
+	a.data = data
+	return err
+}
+
+//todo
+func (a *Address) MarshalJSON() ([]byte, error) {
+	//hash, err := json.Marshal(a.data)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//return hash, nil
+	//
+	//str := hex.EncodeToString(a.data)
+
+	//ToAddrHex(a.data)
+	str := "\"" + ToAddrHex(a.data) + "\""
+	return []byte(str), nil
+
 }
 
 type Asset struct {
@@ -129,6 +158,68 @@ type Hash struct {
 
 func (h Hash) Bytes() []byte {
 	return h.data
+}
+
+func (h Hash) String() string {
+	return HashPrefix + hex.EncodeToString(h.data)
+}
+
+func (h *Hash) UnmarshalJSON(input []byte) error {
+	js := string(input)
+	js = js[1 : len(js)-1]
+	data, err := Decode(js)
+	h.data = data
+	return err
+}
+
+// todo
+func (h *Hash) MarshalJSON() ([]byte, error) {
+	hash, err := json.Marshal(h.data)
+	if err != nil {
+		return nil, err
+	}
+	return hash, nil
+}
+
+func (id *ID) MarshalJSON() ([]byte, error) {
+	str := "\"" + ToAddrHex(id.Serialize()) + "\""
+	return []byte(str), nil
+}
+
+// ToZvHex converts the input byte array to a hex string
+func ToAddrHex(b []byte) string {
+	hex := hex.EncodeToString(b)
+	// Prefer output of "0x0" instead of "0x"
+	if len(hex) == 0 {
+		hex = "0"
+	}
+	return AddrPrefix + hex
+}
+
+// Serialize convert ID to byte slice (LittleEndian)
+func (id ID) Serialize() []byte {
+	idBytes := id.value.Bytes()
+	if len(idBytes) == Idlength {
+		return idBytes
+	}
+	if len(idBytes) > Idlength {
+		// hold it for now
+		panic("ID Serialize error: ID bytes is more than Idlength")
+	}
+	buff := make([]byte, Idlength)
+	copy(buff[Idlength-len(idBytes):Idlength], idBytes)
+	return buff
+}
+
+func (id *ID) UnmarshalJSON(data []byte) error {
+	str := string(data[:])
+	if len(str) < 2 {
+		return fmt.Errorf("data size less than min")
+	}
+	str = str[1 : len(str)-1]
+	js, err := DecodeZV(str)
+	id.value.SetBytes(js)
+	return err
 }
 
 type Event struct {

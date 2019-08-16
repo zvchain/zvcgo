@@ -1,7 +1,9 @@
 package zvlib
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 )
 
 var (
@@ -10,6 +12,7 @@ var (
 
 type Api struct {
 	host string
+	Signer
 }
 
 func NewApi(url string) *Api {
@@ -35,17 +38,15 @@ func (api Api) GetBlockDetailByHeight(height uint64) (*BlockDetail, error) {
 	return api.GetBlockDetailByHash(*hash)
 }
 
-// todo
 func (api Api) GetBlockByHash(hash Hash) (*Block, error) {
 	block := new(Block)
-	err := api.request("Gzv", "getBlockByHash", block, hash)
+	err := api.request("Gzv", "getBlockByHash", block, hash.String())
 	return block, err
 }
 
-//todo
 func (api Api) GetBlockDetailByHash(hash Hash) (*BlockDetail, error) {
 	blockDetail := new(BlockDetail)
-	err := api.request("Dev", "blockDetail", blockDetail, hash)
+	err := api.request("Dev", "blockDetail", blockDetail, hash.String())
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +54,12 @@ func (api Api) GetBlockDetailByHash(hash Hash) (*BlockDetail, error) {
 }
 
 func (api Api) GetTransactionByHash(hash Hash) (*Transaction, error) {
-	return nil, nil
+	tx := new(Transaction)
+	err := api.request("Gzv", "transDetail", tx, hash.String())
+	if err != nil {
+		return nil, err
+	}
+	return tx, nil
 }
 
 func (api Api) BlockHeight() (uint64, error) {
@@ -73,15 +79,14 @@ func (api Api) GetBlockHashByHeight(height uint64) (*Hash, error) {
 
 func (api Api) GetNonce(address Address) (uint64, error) {
 	var nonce uint64
-	err := api.request("Gzv", "nonce", &nonce, address)
+	err := api.request("Gzv", "nonce", &nonce, address.String())
 	return nonce, err
 }
 
-// for contract? todo
 func (api Api) GetCode(address Address) (string, error) {
 	accountMsg := new(AccountMsg)
 	var code string
-	err := api.request("Gzv", "viewAccount", accountMsg, address)
+	err := api.request("Gzv", "viewAccount", accountMsg, address.String())
 	if err != nil {
 		return code, err
 	}
@@ -92,20 +97,60 @@ func (api Api) GetCode(address Address) (string, error) {
 //todo
 func (api Api) GetData(address Address, key string) (interface{}, error) {
 	accountMsg := new(AccountMsg)
-	err := api.request("Gzv", "viewAccount", accountMsg, address, key)
+	err := api.request("Gzv", "viewAccount", accountMsg, address.String(), key)
+	if err != nil {
+		return nil, err
+	}
 	return accountMsg, err
 }
 
 func (api Api) SetSigner(signer Signer) {
-
+	api.Signer = signer
 }
 
+//todo
 func (api Api) SendRawTransaction(tx RawTransaction) (*Hash, error) {
-	return nil, nil
+
+	// todo get nonce
+	if tx.ToRawTransaction().Nonce == 0 {
+		var nonce uint64
+		err := api.request("Gzv", "nonce", &nonce, tx.ToRawTransaction().Source.String())
+		if err != nil {
+			return nil, err
+		}
+		tx.ToRawTransaction().Nonce = nonce
+	}
+
+	hash := new(Hash)
+	jsonByte, err := json.Marshal(tx)
+	if err != nil {
+		return nil, err
+	}
+	//todo
+	err = api.request("Gzv", "tx", hash, string(jsonByte))
+	if err != nil {
+		return nil, err
+	}
+	return hash, err
 }
 
+//todo
 func (api Api) SignAndSendRawTransaction(tx RawTransaction) (*Hash, error) {
-	return nil, nil
+
+	sign, err := api.Sign(tx)
+	fmt.Println("SIGN:", sign)
+	if err != nil {
+		return nil, err
+	}
+	rawTx := tx.ToRawTransaction()
+	rawTx.Sign = sign.Bytes()
+	fmt.Println(rawTx)
+
+	hash, err := api.SendRawTransaction(rawTx)
+	if err != nil {
+		return nil, err
+	}
+	return hash, nil
 }
 
 func (api Api) GetPastEvent(address Address, topic string, from, to uint64) ([]*Event, error) {
@@ -116,12 +161,25 @@ func (api Api) EventListen(address Address, topic string, from uint64, callBack 
 	return nil
 }
 
-func (api Api) MinerInfo(address Address) error {
-	return nil
+func (api Api) MinerInfo(address Address, detail interface{}) (*MinerStakeDetails, error) {
+	stakeDetails := new(MinerStakeDetails)
+
+	switch detail.(type) {
+	case Address:
+		detail = detail.(Address).String()
+	case string:
+		if detail != "" && detail != "all" {
+			return nil, fmt.Errorf("params input err, please check it carefully")
+		}
+	}
+	err := api.request("Gzv", "minerInfo", stakeDetails, address.String(), detail)
+	return stakeDetails, err
 }
 
-func (api Api) Balance(address Address) error {
-	return nil
+func (api Api) Balance(address Address) (float64, error) {
+	var balance float64
+	err := api.request("Gzv", "balance", &balance, address.String())
+	return balance, err
 }
 
 type EventCallBack func(event *Event)

@@ -18,3 +18,23 @@ type AccountMsg struct {
 	Code      string                 `json:"code"`
 	StateData map[string]interface{} `json:"state_data"`
 }
+
+type MortGage struct {
+	Stake              uint64 `json:"stake"`
+	ApplyHeight        uint64 `json:"apply_height"`
+	Type               string `json:"type"`
+	Status             string `json:"miner_status"`
+	StatusUpdateHeight uint64 `json:"status_update_height"`
+}
+
+type StakeDetail struct {
+	Value        uint64 `json:"value"`
+	UpdateHeight uint64 `json:"update_height"`
+	MType        string `json:"m_type"`
+	Status       string `json:"stake_status"`
+}
+
+type MinerStakeDetails struct {
+	Overview []*MortGage               `json:"overview,omitempty"`
+	Details  map[string][]*StakeDetail `json:"details,omitempty"`
+}

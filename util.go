@@ -67,6 +67,10 @@ func has0xPrefix(input string) bool {
 	return len(input) >= 2 && input[0] == '0' && (input[1] == 'x' || input[1] == 'X')
 }
 
+func hasZVPrefix(input string) bool {
+	return len(input) >= 2 && (input[0] == 'z' || input[0] == 'Z') && (input[1] == 'v' || input[1] == 'V')
+}
+
 // Decode decodes a hex string with 0x prefix.
 func Decode(input string) ([]byte, error) {
 	if len(input) == 0 {
@@ -88,4 +92,19 @@ func Encode(b []byte) string {
 	copy(enc, "0x")
 	hex.Encode(enc[2:], b)
 	return string(enc)
+}
+
+// Decode decodes a hex string with zv prefix.
+func DecodeZV(input string) ([]byte, error) {
+	if len(input) == 0 {
+		return nil, ErrorInvalid0xString
+	}
+	if !hasZVPrefix(input) {
+		return nil, ErrorInvalid0xString
+	}
+	b, err := hex.DecodeString(input[2:])
+	if err != nil {
+		err = ErrorInvalid0xString
+	}
+	return b, err
 }

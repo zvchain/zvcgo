@@ -6,24 +6,87 @@ import (
 	"github.com/zvchain/zvchain/middleware/types"
 )
 
+const (
+	DefaultGasPrice = 500
+	DefaultGasLimit = 3000
+)
+
+type SimpleTx struct {
+	Data   []byte   `json:"data"`
+	Value  float64  `json:"value"`
+	Nonce  uint64   `json:"nonce"`
+	Source *Address `json:"source"`
+	Target *Address `json:"target"`
+	Type   int8     `json:"type"`
+
+	GasLimit uint64 `json:"gas_limit"`
+	GasPrice uint64 `json:"gas_price"`
+	Hash     Hash   `json:"hash"`
+
+	ExtraData string `json:"extra_data"`
+}
+
 type Transaction struct {
-	Data   []byte
-	Value  uint64
-	Nonce  uint64
-	Target *Address
-	Type   int8
+	Data   []byte   `json:"data"`
+	Value  uint64   `json:"value"`
+	Nonce  uint64   `json:"nonce"`
+	Target *Address `json:"target"`
+	Type   int8     `json:"type"`
 
-	GasLimit uint64
-	GasPrice uint64
-	Hash     Hash
+	GasLimit uint64 `json:"gas_limit"`
+	GasPrice uint64 `json:"gas_price"`
+	Hash     Hash   `json:"hash"`
 
-	ExtraData []byte
-	Sign      []byte
-	Source    *Address
+	ExtraData []byte   `json:"extra_data"`
+	Sign      []byte   `json:"sign"`
+	Source    *Address `json:"source"`
 }
 
 func (t Transaction) ToRawTransaction() Transaction {
 	return t
+}
+
+func (t *Transaction) SetGasPrice(gasPrice uint64) *Transaction {
+	t.GasPrice = gasPrice
+	return t
+}
+
+func (t *Transaction) SetGasLimit(gasLimit uint64) *Transaction {
+	t.GasPrice = gasLimit
+	return t
+}
+
+func (t *Transaction) SetNonce(nonce uint64) *Transaction {
+	t.Nonce = nonce
+	return t
+}
+
+func (t *Transaction) SetData(data []byte) *Transaction {
+	t.Data = data
+	return t
+}
+
+func (t *Transaction) SetExtraData(extraData []byte) *Transaction {
+	t.ExtraData = extraData
+	return t
+}
+
+func NewTrasnferTransaction(target, value string) (*Transaction, error) {
+
+	if !hasZVPrefix(target) {
+		return nil, ErrorInvalidZVString
+	}
+
+	asset, err := NewAssetFromString(value)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Transaction{
+		Value:    asset.value,
+		GasPrice: DefaultGasPrice,
+		GasLimit: DefaultGasLimit,
+	}, nil
 }
 
 func (t Transaction) GenHash() Hash {
@@ -48,7 +111,7 @@ func (t Transaction) GenHash() Hash {
 	// gasPrice
 	buffer.Write(gasPriceB.GetBytesWithSign())
 	if len(t.ExtraData) != 0 {
-		buffer.Write(t.ExtraData)
+		buffer.Write([]byte(t.ExtraData))
 	}
 	return Hash{common.Sha256(buffer.Bytes())}
 }
@@ -68,7 +131,7 @@ type RewardTransaction struct {
 	Hash         Hash   `json:"hash"`
 	BlockHash    Hash   `json:"block_hash"`
 	GroupSeed    Hash   `json:"group_id"`
-	TargetIDs    string `json:"target_ids"`
+	TargetIDs    []ID   `json:"target_ids"`
 	Value        uint64 `json:"value"`
 	PackFee      uint64 `json:"pack_fee"`
 	StatusReport string `json:"status_report"`
