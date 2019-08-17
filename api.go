@@ -157,10 +157,6 @@ func (api Api) GetPastEvent(address Address, topic string, from, to uint64) ([]*
 	return nil, nil
 }
 
-func (api Api) EventListen(address Address, topic string, from uint64, callBack EventCallBack) error {
-	return nil
-}
-
 func (api Api) MinerInfo(address Address, detail interface{}) (*MinerStakeDetails, error) {
 	stakeDetails := new(MinerStakeDetails)
 
@@ -180,10 +176,4 @@ func (api Api) Balance(address Address) (float64, error) {
 	var balance float64
 	err := api.request("Gzv", "balance", &balance, address.String())
 	return balance, err
-}
-
-type EventCallBack func(event *Event)
-
-func A(event *Event) {
-
 }
