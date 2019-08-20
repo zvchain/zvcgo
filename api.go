@@ -53,8 +53,8 @@ func (api Api) GetBlockDetailByHash(hash Hash) (*BlockDetail, error) {
 	return blockDetail, nil
 }
 
-func (api Api) GetTransactionByHash(hash Hash) (*Transaction, error) {
-	tx := new(Transaction)
+func (api Api) GetTransactionByHash(hash Hash) (*RawTransaction, error) {
+	tx := new(RawTransaction)
 	err := api.request("Gzv", "transDetail", tx, hash.String())
 	if err != nil {
 		return nil, err
@@ -94,10 +94,9 @@ func (api Api) GetCode(address Address) (string, error) {
 	return code, err
 }
 
-//todo
 func (api Api) GetData(address Address, key string) (interface{}, error) {
 	accountMsg := new(AccountMsg)
-	err := api.request("Gzv", "viewAccount", accountMsg, address.String(), key)
+	err := api.request("Gzv", "queryAccountData", address.String(), key, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -108,25 +107,12 @@ func (api Api) SetSigner(signer Signer) {
 	api.Signer = signer
 }
 
-//todo
-func (api Api) SendRawTransaction(tx RawTransaction) (*Hash, error) {
-
-	// todo get nonce
-	if tx.ToRawTransaction().Nonce == 0 {
-		var nonce uint64
-		err := api.request("Gzv", "nonce", &nonce, tx.ToRawTransaction().Source.String())
-		if err != nil {
-			return nil, err
-		}
-		tx.ToRawTransaction().Nonce = nonce
-	}
-
+func (api Api) SendTransaction(tx Transaction) (*Hash, error) {
 	hash := new(Hash)
-	jsonByte, err := json.Marshal(tx)
+	jsonByte, err := json.Marshal(tx.ToRawTransaction())
 	if err != nil {
 		return nil, err
 	}
-	//todo
 	err = api.request("Gzv", "tx", hash, string(jsonByte))
 	if err != nil {
 		return nil, err
@@ -134,27 +120,22 @@ func (api Api) SendRawTransaction(tx RawTransaction) (*Hash, error) {
 	return hash, err
 }
 
-//todo
-func (api Api) SignAndSendRawTransaction(tx RawTransaction) (*Hash, error) {
-
-	sign, err := api.Sign(tx)
-	fmt.Println("SIGN:", sign)
+func (api Api) SignAndSendTransaction(tx Transaction) (*Hash, error) {
+	rawTransaction := tx.ToRawTransaction()
+	if rawTransaction.Source == nil {
+		return nil, ErrorSignerNotFound
+	}
+	rawTransaction.Hash = rawTransaction.GenHash()
+	sign, err := api.Sign(rawTransaction)
 	if err != nil {
 		return nil, err
 	}
-	rawTx := tx.ToRawTransaction()
-	rawTx.Sign = sign.Bytes()
-	fmt.Println(rawTx)
-
-	hash, err := api.SendRawTransaction(rawTx)
+	rawTransaction.Sign = sign.Bytes()
+	hash, err := api.SendTransaction(rawTransaction)
 	if err != nil {
 		return nil, err
 	}
 	return hash, nil
-}
-
-func (api Api) GetPastEvent(address Address, topic string, from, to uint64) ([]*Event, error) {
-	return nil, nil
 }
 
 func (api Api) MinerInfo(address Address, detail interface{}) (*MinerStakeDetails, error) {

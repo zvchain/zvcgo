@@ -88,7 +88,7 @@ func NewAccount(privateKey []byte) (*Account, error) {
 	return &Account{key}, err
 }
 
-func (a Account) Sign(tx RawTransaction) (*Sign, error) {
+func (a Account) Sign(tx Transaction) (*Sign, error) {
 	pribytes := a.pk.Bytes()
 	seckbytes := pribytes
 	if len(pribytes) < 32 {

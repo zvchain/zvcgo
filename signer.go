@@ -43,7 +43,7 @@ func (kb *KeyBag) ImportPrivateKeyFromString(k string) (err error) {
 	return kb.ImportPrivateKey(bs)
 }
 
-func (kb KeyBag) Sign(tx RawTransaction) (*Sign, error) {
+func (kb KeyBag) Sign(tx Transaction) (*Sign, error) {
 	txr := tx.ToRawTransaction()
 	if txr.Source == nil {
 		return nil, ErrorSourceEmpty
@@ -60,7 +60,7 @@ func NewKeyBag() *KeyBag {
 }
 
 type Signer interface {
-	Sign(tx RawTransaction) (*Sign, error)
+	Sign(tx Transaction) (*Sign, error)
 }
 
 // Sign Data struct

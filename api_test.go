@@ -148,11 +148,11 @@ func TestApi_SignAndSendRawTransaction(t *testing.T) {
 
 	api.Signer = account
 
-	tx := Transaction{
+	tx := RawTransaction{
 		Value:  1,
 		Target: &minerAddr,
 	}
-	hash, err := api.SignAndSendRawTransaction(tx)
-	fmt.Println(hash)
+	hash, err := api.SignAndSendTransaction(tx)
+	fmt.Println(hash.String())
 	fmt.Println(err)
 }

@@ -26,7 +26,7 @@ type SimpleTx struct {
 	ExtraData string `json:"extra_data"`
 }
 
-type Transaction struct {
+type RawTransaction struct {
 	Data   []byte   `json:"data"`
 	Value  uint64   `json:"value"`
 	Nonce  uint64   `json:"nonce"`
@@ -42,36 +42,36 @@ type Transaction struct {
 	Source    *Address `json:"source"`
 }
 
-func (t Transaction) ToRawTransaction() Transaction {
+func (t RawTransaction) ToRawTransaction() RawTransaction {
 	return t
 }
 
-func (t *Transaction) SetGasPrice(gasPrice uint64) *Transaction {
+func (t *RawTransaction) SetGasPrice(gasPrice uint64) *RawTransaction {
 	t.GasPrice = gasPrice
 	return t
 }
 
-func (t *Transaction) SetGasLimit(gasLimit uint64) *Transaction {
+func (t *RawTransaction) SetGasLimit(gasLimit uint64) *RawTransaction {
 	t.GasPrice = gasLimit
 	return t
 }
 
-func (t *Transaction) SetNonce(nonce uint64) *Transaction {
+func (t *RawTransaction) SetNonce(nonce uint64) *RawTransaction {
 	t.Nonce = nonce
 	return t
 }
 
-func (t *Transaction) SetData(data []byte) *Transaction {
+func (t *RawTransaction) SetData(data []byte) *RawTransaction {
 	t.Data = data
 	return t
 }
 
-func (t *Transaction) SetExtraData(extraData []byte) *Transaction {
+func (t *RawTransaction) SetExtraData(extraData []byte) *RawTransaction {
 	t.ExtraData = extraData
 	return t
 }
 
-func NewTrasnferTransaction(target, value string) (*Transaction, error) {
+func NewTrasnferTransaction(target, value string) (*RawTransaction, error) {
 
 	if !hasZVPrefix(target) {
 		return nil, ErrorInvalidZVString
@@ -82,14 +82,14 @@ func NewTrasnferTransaction(target, value string) (*Transaction, error) {
 		return nil, err
 	}
 
-	return &Transaction{
+	return &RawTransaction{
 		Value:    asset.value,
 		GasPrice: DefaultGasPrice,
 		GasLimit: DefaultGasLimit,
 	}, nil
 }
 
-func (t Transaction) GenHash() Hash {
+func (t RawTransaction) GenHash() Hash {
 	buffer := bytes.Buffer{}
 	if len(t.Data) != 0 {
 		buffer.Write(t.Data)
@@ -116,8 +116,8 @@ func (t Transaction) GenHash() Hash {
 	return Hash{common.Sha256(buffer.Bytes())}
 }
 
-type RawTransaction interface {
-	ToRawTransaction() Transaction
+type Transaction interface {
+	ToRawTransaction() RawTransaction
 }
 
 type TransferTransaction struct {
