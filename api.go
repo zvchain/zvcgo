@@ -130,7 +130,7 @@ func (api Api) SignAndSendTransaction(tx Transaction) (*Hash, error) {
 	if err != nil {
 		return nil, err
 	}
-	rawTransaction.Sign = sign.Bytes()
+	rawTransaction.Sign = sign
 	hash, err := api.SendTransaction(rawTransaction)
 	if err != nil {
 		return nil, err

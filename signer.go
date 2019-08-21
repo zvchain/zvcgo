@@ -94,3 +94,7 @@ func (s Sign) Bytes() []byte {
 	r[64] = s.recid
 	return r
 }
+
+func (s Sign) MarshalJSON() ([]byte, error) {
+	return []byte("\"" + Encode(s.Bytes()) + "\""), nil
+}

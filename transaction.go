@@ -7,8 +7,10 @@ import (
 )
 
 const (
-	DefaultGasPrice = 500
-	DefaultGasLimit = 3000
+	DefaultGasPrice        = 500
+	DefaultGasLimit        = 3000
+	CodeBytePrice          = 19073 //1.9073486328125
+	CodeBytePricePrecision = 10000
 )
 
 type SimpleTx struct {
@@ -33,12 +35,12 @@ type RawTransaction struct {
 	Target *Address `json:"target"`
 	Type   int8     `json:"type"`
 
-	GasLimit uint64 `json:"gas_limit"`
-	GasPrice uint64 `json:"gas_price"`
+	GasLimit uint64 `json:"gas"`
+	GasPrice uint64 `json:"gasprice"`
 	Hash     Hash   `json:"hash"`
 
 	ExtraData []byte   `json:"extra_data"`
-	Sign      []byte   `json:"sign"`
+	Sign      *Sign    `json:"sign"`
 	Source    *Address `json:"source"`
 }
 
@@ -69,24 +71,6 @@ func (t *RawTransaction) SetData(data []byte) *RawTransaction {
 func (t *RawTransaction) SetExtraData(extraData []byte) *RawTransaction {
 	t.ExtraData = extraData
 	return t
-}
-
-func NewTrasnferTransaction(target, value string) (*RawTransaction, error) {
-
-	if !hasZVPrefix(target) {
-		return nil, ErrorInvalidZVString
-	}
-
-	asset, err := NewAssetFromString(value)
-	if err != nil {
-		return nil, err
-	}
-
-	return &RawTransaction{
-		Value:    asset.value,
-		GasPrice: DefaultGasPrice,
-		GasLimit: DefaultGasLimit,
-	}, nil
 }
 
 func (t RawTransaction) GenHash() Hash {
@@ -127,6 +111,22 @@ type TransferTransaction struct {
 	ExtraData []byte
 }
 
+func NewTransferTransaction(from, to Address, value Asset, data []byte) *TransferTransaction {
+	return &TransferTransaction{from, to, value, data}
+}
+
+func (tt *TransferTransaction) ToRawTransaction() RawTransaction {
+	gaslimit := len(tt.ExtraData)*CodeBytePrice/CodeBytePricePrecision + DefaultGasLimit
+	tx := RawTransaction{
+		Source:   &tt.From,
+		Value:    tt.Value.Ra(),
+		Target:   &tt.To,
+		GasLimit: uint64(gaslimit),
+		GasPrice: DefaultGasPrice,
+	}
+	return tx
+}
+
 type RewardTransaction struct {
 	Hash         Hash   `json:"hash"`
 	BlockHash    Hash   `json:"block_hash"`
@@ -136,13 +136,4 @@ type RewardTransaction struct {
 	PackFee      uint64 `json:"pack_fee"`
 	StatusReport string `json:"status_report"`
 	Success      bool   `json:"success"`
-}
-
-type ContractCallTransaction struct {
-}
-
-type ContractDeployTransaction struct {
-}
-
-type MinerStakeTransaction struct {
 }

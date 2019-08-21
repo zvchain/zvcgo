@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-var api = NewApi("http://node2.zvchain.io:8101")
+var api = NewApi("http://node1.zvchain.io:8101")
 var (
 	hash1, _  = hex.DecodeString("7a41f2571af87bf9e798828f4b1cd9638b770b105f5821cc060ff6209d41127c")
 	blockHash = Hash{
@@ -149,10 +149,12 @@ func TestApi_SignAndSendRawTransaction(t *testing.T) {
 	api.Signer = account
 
 	tx := RawTransaction{
-		Value:  1,
-		Target: &minerAddr,
+		Source:   account.Address(),
+		Value:    1,
+		Target:   &minerAddr,
+		GasLimit: 5000,
+		GasPrice: 300,
 	}
-	hash, err := api.SignAndSendTransaction(tx)
-	fmt.Println(hash.String())
+	_, err = api.SignAndSendTransaction(tx)
 	fmt.Println(err)
 }
