@@ -89,6 +89,9 @@ func NewAccount(privateKey []byte) (*Account, error) {
 }
 
 func (a Account) Sign(tx Transaction) (*Sign, error) {
+	if tx.ToRawTransaction().Source.String() != a.Address().String() {
+		return nil, ErrorSignerNotFound
+	}
 	pribytes := a.pk.Bytes()
 	seckbytes := pribytes
 	if len(pribytes) < 32 {

@@ -1,4 +1,4 @@
-module github.com/zvchain/zvlib
+module github.com/zvchain/zvcgo
 
 go 1.12
 

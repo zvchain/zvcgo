@@ -1,6 +1,8 @@
 package zvlib
 
-import "math/big"
+import (
+	"math/big"
+)
 
 // ABIVerify stores the contract function name and args types,
 // in order to facilitate the abi verify

@@ -35,8 +35,8 @@ type RawTransaction struct {
 	Target *Address `json:"target"`
 	Type   int8     `json:"type"`
 
-	GasLimit uint64 `json:"gas"`
-	GasPrice uint64 `json:"gasprice"`
+	GasLimit uint64 `json:"gas_limit"`
+	GasPrice uint64 `json:"gas_price"`
 	Hash     Hash   `json:"hash"`
 
 	ExtraData []byte   `json:"extra_data"`
@@ -86,6 +86,9 @@ func (t RawTransaction) GenHash() Hash {
 	if t.Target != nil {
 		buffer.Write(t.Target.Bytes())
 	}
+	if t.Source != nil {
+		buffer.Write(t.Source.Bytes())
+	}
 	// type
 	buffer.WriteByte(byte(t.Type))
 	gasLimitB := types.NewBigInt(t.GasLimit)
@@ -105,26 +108,23 @@ type Transaction interface {
 }
 
 type TransferTransaction struct {
-	From      Address
-	To        Address
-	Value     Asset
-	ExtraData []byte
+	RawTransaction
 }
 
 func NewTransferTransaction(from, to Address, value Asset, data []byte) *TransferTransaction {
-	return &TransferTransaction{from, to, value, data}
-}
-
-func (tt *TransferTransaction) ToRawTransaction() RawTransaction {
-	gaslimit := len(tt.ExtraData)*CodeBytePrice/CodeBytePricePrecision + DefaultGasLimit
+	gaslimit := len(data)*CodeBytePrice/CodeBytePricePrecision + DefaultGasLimit
 	tx := RawTransaction{
-		Source:   &tt.From,
-		Value:    tt.Value.Ra(),
-		Target:   &tt.To,
+		Source:   &from,
+		Value:    value.Ra(),
+		Target:   &to,
 		GasLimit: uint64(gaslimit),
 		GasPrice: DefaultGasPrice,
 	}
-	return tx
+	return &TransferTransaction{tx}
+}
+
+func (tt *TransferTransaction) ToRawTransaction() RawTransaction {
+	return tt.RawTransaction
 }
 
 type RewardTransaction struct {

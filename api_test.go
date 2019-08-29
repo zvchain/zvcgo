@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-var api = NewApi("http://node1.zvchain.io:8101")
+var api = NewApi("http://120.77.155.204:8102")
 var (
 	hash1, _  = hex.DecodeString("7a41f2571af87bf9e798828f4b1cd9638b770b105f5821cc060ff6209d41127c")
 	blockHash = Hash{
@@ -40,13 +40,13 @@ func TestApi_GetBlockByHeight(t *testing.T) {
 	fmt.Println(err)
 }
 
-func TestApi_GetBlockDetailByHeight(t *testing.T) {
-	blockDetail, err := api.GetBlockDetailByHeight(2119)
-	if err != nil {
-		t.Error(err)
-	}
-	fmt.Println(blockDetail)
-}
+//func TestApi_GetBlockDetailByHeight(t *testing.T) {
+//	blockDetail, err := api.GetBlockDetailByHeight(2119)
+//	if err != nil {
+//		t.Error(err)
+//	}
+//	fmt.Println(blockDetail)
+//}
 
 func TestApi_GetBlockByHash(t *testing.T) {
 	block, err := api.GetBlockByHash(blockHash)
@@ -56,17 +56,17 @@ func TestApi_GetBlockByHash(t *testing.T) {
 	fmt.Println(block)
 }
 
-func TestApi_GetBlockDetailByHash(t *testing.T) {
-	blockDetail, err := api.GetBlockDetailByHash(blockHash)
-	if err != nil {
-		t.Error(err)
-	}
-	fmt.Println(blockDetail)
-	for _, v := range blockDetail.GenRewardTx.TargetIDs {
-		res, _ := v.MarshalJSON()
-		fmt.Println(string(res))
-	}
-}
+//func TestApi_GetBlockDetailByHash(t *testing.T) {
+//	blockDetail, err := api.GetBlockDetailByHash(blockHash)
+//	if err != nil {
+//		t.Error(err)
+//	}
+//	fmt.Println(blockDetail)
+//	for _, v := range blockDetail.GenRewardTx.TargetIDs {
+//		res, _ := v.MarshalJSON()
+//		fmt.Println(string(res))
+//	}
+//}
 
 func TestApi_GetTransactionByHash(t *testing.T) {
 	tx, err := api.GetTransactionByHash(txHash)
@@ -98,14 +98,6 @@ func TestApi_GetNonce(t *testing.T) {
 	fmt.Println("nonce:", nonce)
 }
 
-func TestApi_GetCode(t *testing.T) {
-	code, err := api.GetCode(contractAddr)
-	if err != nil {
-		t.Error(err)
-	}
-	fmt.Println("code:", code)
-}
-
 //func TestApi_GetCode(t *testing.T) {
 //	addr,err := Decode("0xedf103af25f0bb800fdd057e201200f891ece964a3d7d14df72be12a8017fccb")
 //	if err != nil {
@@ -133,28 +125,4 @@ func TestApi_Balance(t *testing.T) {
 		t.Error(err)
 	}
 	fmt.Println(balance)
-}
-
-func TestApi_SignAndSendRawTransaction(t *testing.T) {
-
-	sk, err := hex.DecodeString("190e5c4edf9a70635d5ae340ff43849f0a1096ca5b0ed246ca4dc1d60408e5")
-	if err != nil {
-		t.Error(err)
-	}
-	account, err := NewAccount(sk)
-	if err != nil {
-		t.Error(err)
-	}
-
-	api.Signer = account
-
-	tx := RawTransaction{
-		Source:   account.Address(),
-		Value:    1,
-		Target:   &minerAddr,
-		GasLimit: 5000,
-		GasPrice: 300,
-	}
-	_, err = api.SignAndSendTransaction(tx)
-	fmt.Println(err)
 }

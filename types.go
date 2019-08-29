@@ -2,7 +2,6 @@ package zvlib
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -161,6 +160,9 @@ func (h Hash) Bytes() []byte {
 }
 
 func (h Hash) String() string {
+	if len(h.data) == 0 {
+		return "0x00"
+	}
 	return HashPrefix + hex.EncodeToString(h.data)
 }
 
@@ -172,13 +174,9 @@ func (h *Hash) UnmarshalJSON(input []byte) error {
 	return err
 }
 
-// todo
 func (h *Hash) MarshalJSON() ([]byte, error) {
-	hash, err := json.Marshal(h.data)
-	if err != nil {
-		return nil, err
-	}
-	return hash, nil
+	str := "\"" + h.String() + "\""
+	return []byte(str), nil
 }
 
 func (id *ID) MarshalJSON() ([]byte, error) {

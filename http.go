@@ -3,6 +3,7 @@ package zvlib
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -30,12 +31,28 @@ type RPCReqObj struct {
 	ID      uint          `json:"id"`
 }
 
-// RPCResObj is complete rpc response body
+type RawMessage []byte
+
+// MarshalJSON returns m as the JSON encoding of m.
+func (m RawMessage) MarshalJSON() ([]byte, error) {
+	if m == nil {
+		return []byte("null"), nil
+	}
+	return m, nil
+}
+
+// UnmarshalJSON sets *m to a copy of data.
+func (m *RawMessage) UnmarshalJSON(data []byte) error {
+	if m == nil {
+		return errors.New("RawMessage: UnmarshalJSON on nil pointer")
+	}
+	*m = append((*m)[0:0], data...)
+	return nil
+}
+
 type RPCResObj struct {
-	Jsonrpc string       `json:"jsonrpc"`
-	ID      uint         `json:"id"`
-	Result  *Result      `json:"result,omitempty"`
-	Error   *ErrorResult `json:"error,omitempty"`
+	Result RawMessage   `json:"result,omitempty"`
+	Error  *ErrorResult `json:"error,omitempty"`
 }
 
 // ErrorResult is rpc requestGzv error returned variable parameter
@@ -70,9 +87,9 @@ func failResult(err string) (*Result, error) {
 	}, nil
 }
 
-func (api *Api) request(nameSpace, method string, data interface{}, params ...interface{}) error {
+func (api *Api) request(nameSpace, method string, params ...interface{}) (*RawMessage, error) {
 	if api.host == "" {
-		return fmt.Errorf("ErrUnConnected")
+		return nil, fmt.Errorf("ErrUnConnected")
 	}
 
 	param := RPCReqObj{
@@ -84,28 +101,22 @@ func (api *Api) request(nameSpace, method string, data interface{}, params ...in
 
 	paramBytes, err := json.Marshal(param)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	resp, err := http.Post(api.host, "application/json", bytes.NewReader(paramBytes))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 	responseBytes, err := ioutil.ReadAll(resp.Body)
-	fmt.Println("responseBytes", string(responseBytes))
 	ret := &RPCResObj{}
-	if data != nil {
-		ret.Result = &Result{
-			Data: data,
-		}
-	}
-
+	fmt.Println(string(responseBytes))
 	if err := json.Unmarshal(responseBytes, ret); err != nil {
-		return err
+		return nil, err
 	}
 	if ret.Error != nil {
-		return fmt.Errorf(ret.Error.Message)
+		return nil, fmt.Errorf(ret.Error.Message)
 	}
-	return nil
+	return &ret.Result, nil
 }
