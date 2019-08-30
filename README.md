@@ -23,8 +23,16 @@ fmt.Printf("Current block height: %d", height)
 
 ## Transfer ZVC Example 
 ```go
+mnemonic, _ := NewMnemonic(Mnemonic12WordBitSize)
+fmt.Println("Mnemonic: ", mnemonic)
+wallet := NewWallet(mnemonic)
+if wallet == nil {
+    panic("wrong mnemonic")
+}
+acc, _ := wallet.DeriveAccount(0)
+// acc, err := zvcgo.NewAccountFromString("you private key")
+fmt.Println("account address: ", acc.Address().String())
 api := zvcgo.NewApi("http://120.77.155.204:8102")
-acc, err := zvcgo.NewAccountFromString("you private key")
 if err != nil {
     panic(err)
 }
