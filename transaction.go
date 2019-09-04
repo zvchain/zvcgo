@@ -1,8 +1,10 @@
 package zvcgo
 
 import (
+	"encoding/json"
 	"github.com/zvchain/zvchain/common"
 	"github.com/zvchain/zvchain/middleware/types"
+	"github.com/zvchain/zvchain/tvm"
 )
 
 const (
@@ -10,6 +12,12 @@ const (
 	DefaultGasLimit        = 3000
 	CodeBytePrice          = 19073 //1.9073486328125
 	CodeBytePricePrecision = 10000
+)
+
+const (
+	TransactionTypeTransfer       = 0
+	TransactionTypeContractCreate = 1
+	TransactionTypeContractCall   = 2
 )
 
 type SimpleTx struct {
@@ -115,12 +123,59 @@ func NewTransferTransaction(from, to Address, value Asset, data []byte) *Transfe
 		Value:    value.Ra(),
 		Target:   &to,
 		GasLimit: uint64(gaslimit),
+		Type:     TransactionTypeTransfer,
 		GasPrice: DefaultGasPrice,
 	}
 	return &TransferTransaction{tx}
 }
 
 func (tt *TransferTransaction) ToRawTransaction() RawTransaction {
+	return tt.RawTransaction
+}
+
+type ContractCallTransaction struct {
+	RawTransaction
+}
+
+func NewContractCallTransaction(from, to Address, value Asset, funcName string, params ...interface{}) *ContractCreateTransaction {
+	abi := tvm.ABI{FuncName: funcName, Args: params}
+	d, _ := json.Marshal(abi)
+	tx := RawTransaction{
+		Source:   &from,
+		Value:    value.Ra(),
+		Target:   &to,
+		GasLimit: 60000,
+		GasPrice: DefaultGasPrice,
+		Type:     TransactionTypeContractCall,
+		Data:     d,
+	}
+	return &ContractCreateTransaction{tx}
+}
+
+func (tt *ContractCallTransaction) ToRawTransaction() RawTransaction {
+	return tt.RawTransaction
+}
+
+type ContractCreateTransaction struct {
+	RawTransaction
+}
+
+func NewContractCreateTransaction(from Address, code string, contractName string, value Asset) *ContractCreateTransaction {
+	contract := tvm.Contract{Code: string(code), ContractName: contractName, ContractAddress: nil}
+	d, _ := json.Marshal(contract)
+	tx := RawTransaction{
+		Source:   &from,
+		Value:    value.Ra(),
+		Target:   nil,
+		GasLimit: 60000,
+		GasPrice: DefaultGasPrice,
+		Type:     TransactionTypeContractCreate,
+		Data:     d,
+	}
+	return &ContractCreateTransaction{tx}
+}
+
+func (tt *ContractCreateTransaction) ToRawTransaction() RawTransaction {
 	return tt.RawTransaction
 }
 
