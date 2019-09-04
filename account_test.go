@@ -1,4 +1,4 @@
-package zvlib
+package zvcgo
 
 import (
 	"testing"

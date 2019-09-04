@@ -1,7 +1,6 @@
-package zvlib
+package zvcgo
 
 import (
-	"bytes"
 	"github.com/zvchain/zvchain/common"
 	"github.com/zvchain/zvchain/middleware/types"
 )
@@ -74,33 +73,31 @@ func (t *RawTransaction) SetExtraData(extraData []byte) *RawTransaction {
 }
 
 func (t RawTransaction) GenHash() Hash {
-	buffer := bytes.Buffer{}
-	if len(t.Data) != 0 {
-		buffer.Write(t.Data)
+	var target, source *common.Address
+	if t.Target == nil {
+		target = nil
+	} else {
+		tmp := common.BytesToAddress(t.Target.Bytes())
+		target = &tmp
 	}
-	valueB := types.NewBigInt(t.Value)
-	// value
-	buffer.Write(valueB.GetBytesWithSign())
-	// nonce
-	buffer.Write(common.Uint64ToByte(t.Nonce))
-	if t.Target != nil {
-		buffer.Write(t.Target.Bytes())
+	if t.Source == nil {
+		source = nil
+	} else {
+		tmp := common.BytesToAddress(t.Source.Bytes())
+		source = &tmp
 	}
-	if t.Source != nil {
-		buffer.Write(t.Source.Bytes())
+	tx := types.RawTransaction{
+		Data:      t.Data,
+		Value:     types.NewBigInt(t.Value),
+		Nonce:     t.Nonce,
+		Target:    target,
+		Source:    source,
+		Type:      t.Type,
+		GasLimit:  types.NewBigInt(t.GasLimit),
+		GasPrice:  types.NewBigInt(t.GasPrice),
+		ExtraData: t.ExtraData,
 	}
-	// type
-	buffer.WriteByte(byte(t.Type))
-	gasLimitB := types.NewBigInt(t.GasLimit)
-	gasPriceB := types.NewBigInt(t.GasPrice)
-	// gasLimit
-	buffer.Write(gasLimitB.GetBytesWithSign())
-	// gasPrice
-	buffer.Write(gasPriceB.GetBytesWithSign())
-	if len(t.ExtraData) != 0 {
-		buffer.Write([]byte(t.ExtraData))
-	}
-	return Hash{common.Sha256(buffer.Bytes())}
+	return Hash{tx.GenHash().Bytes()}
 }
 
 type Transaction interface {

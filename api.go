@@ -1,4 +1,4 @@
-package zvlib
+package zvcgo
 
 import (
 	"encoding/json"
@@ -105,11 +105,7 @@ func (api *Api) SetSigner(signer Signer) {
 
 func (api Api) SendTransaction(tx Transaction) (*Hash, error) {
 	hash := new(Hash)
-	jsonByte, err := json.Marshal(tx.ToRawTransaction())
-	if err != nil {
-		return nil, err
-	}
-	result, err := api.request("Gzv", "tx", string(jsonByte))
+	result, err := api.request("Gzv", "tx", tx.ToRawTransaction())
 	if err != nil {
 		return nil, err
 	}

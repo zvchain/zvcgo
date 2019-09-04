@@ -1,4 +1,4 @@
-package zvlib
+package zvcgo
 
 import (
 	"encoding/hex"
@@ -74,17 +74,7 @@ func (a *Address) UnmarshalJSON(input []byte) error {
 	return err
 }
 
-//todo
 func (a *Address) MarshalJSON() ([]byte, error) {
-	//hash, err := json.Marshal(a.data)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//return hash, nil
-	//
-	//str := hex.EncodeToString(a.data)
-
-	//ToAddrHex(a.data)
 	str := "\"" + ToAddrHex(a.data) + "\""
 	return []byte(str), nil
 
@@ -186,12 +176,12 @@ func (id *ID) MarshalJSON() ([]byte, error) {
 
 // ToZvHex converts the input byte array to a hex string
 func ToAddrHex(b []byte) string {
-	hex := hex.EncodeToString(b)
+	h := hex.EncodeToString(b)
 	// Prefer output of "0x0" instead of "0x"
-	if len(hex) == 0 {
-		hex = "0"
+	if len(h) == 0 {
+		h = "0"
 	}
-	return AddrPrefix + hex
+	return AddrPrefix + h
 }
 
 // Serialize convert ID to byte slice (LittleEndian)
