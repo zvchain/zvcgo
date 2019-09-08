@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/zvchain/zvchain/common"
 	"io"
 	"regexp"
 	"strconv"
@@ -217,4 +218,15 @@ type Event struct {
 	Index   uint64
 	Message map[string]interface{}
 	Default []interface{}
+}
+
+type ABI struct {
+	FuncName string        `json:"func_name"`
+	Args     []interface{} `json:"args"`
+}
+
+type Contract struct {
+	Code            string          `json:"code"`
+	ContractName    string          `json:"contract_name"`
+	ContractAddress *common.Address `json:"-"`
 }
