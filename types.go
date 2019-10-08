@@ -126,7 +126,7 @@ func NewAssetFromString(s string) (Asset, error) {
 }
 
 func (a Asset) ZVC() uint64 {
-	return a.value
+	return a.value / ZVC
 }
 
 func (a Asset) KRa() uint64 {
