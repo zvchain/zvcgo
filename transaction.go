@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/zvchain/zvchain/common"
 	"github.com/zvchain/zvchain/middleware/types"
-	"github.com/zvchain/zvchain/tvm"
 )
 
 const (
@@ -138,7 +137,7 @@ type ContractCallTransaction struct {
 }
 
 func NewContractCallTransaction(from, to Address, value Asset, funcName string, params ...interface{}) *ContractCreateTransaction {
-	abi := tvm.ABI{FuncName: funcName, Args: params}
+	abi := ABI{FuncName: funcName, Args: params}
 	d, _ := json.Marshal(abi)
 	tx := RawTransaction{
 		Source:   &from,
@@ -161,7 +160,7 @@ type ContractCreateTransaction struct {
 }
 
 func NewContractCreateTransaction(from Address, code string, contractName string, value Asset) *ContractCreateTransaction {
-	contract := tvm.Contract{Code: string(code), ContractName: contractName, ContractAddress: nil}
+	contract := Contract{Code: string(code), ContractName: contractName, ContractAddress: nil}
 	d, _ := json.Marshal(contract)
 	tx := RawTransaction{
 		Source:   &from,
