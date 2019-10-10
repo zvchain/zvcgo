@@ -124,6 +124,7 @@ func NewTransferTransaction(from, to Address, value Asset, data []byte) *Transfe
 		GasLimit: uint64(gaslimit),
 		Type:     TransactionTypeTransfer,
 		GasPrice: DefaultGasPrice,
+		Data:     data,
 	}
 	return &TransferTransaction{tx}
 }
