@@ -82,7 +82,7 @@ func (a *Address) MarshalJSON() ([]byte, error) {
 }
 
 type Asset struct {
-	value uint64
+	Value uint64
 }
 
 func NewAssetFromString(s string) (Asset, error) {
@@ -113,13 +113,13 @@ func NewAssetFromString(s string) (Asset, error) {
 	}
 	switch string(symbol) {
 	case "ra":
-		asset.value = uint64(value * Ra)
+		asset.Value = uint64(value * Ra)
 	case "mra":
-		asset.value = uint64(value * mRa)
+		asset.Value = uint64(value * mRa)
 	case "kra":
-		asset.value = uint64(value * kRa)
+		asset.Value = uint64(value * kRa)
 	case "zvc":
-		asset.value = uint64(value * ZVC)
+		asset.Value = uint64(value * ZVC)
 	default:
 		return Asset{}, ErrorInvalidAssetString
 	}
@@ -127,19 +127,19 @@ func NewAssetFromString(s string) (Asset, error) {
 }
 
 func (a Asset) ZVC() uint64 {
-	return a.value / ZVC
+	return a.Value / ZVC
 }
 
 func (a Asset) KRa() uint64 {
-	return a.value / kRa
+	return a.Value / kRa
 }
 
 func (a Asset) MRa() uint64 {
-	return a.value / mRa
+	return a.Value / mRa
 }
 
 func (a Asset) Ra() uint64 {
-	return a.value
+	return a.Value
 }
 
 type Hash struct {
