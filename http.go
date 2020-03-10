@@ -111,7 +111,6 @@ func (api *Api) request(nameSpace, method string, params ...interface{}) (*RawMe
 	defer resp.Body.Close()
 	responseBytes, err := ioutil.ReadAll(resp.Body)
 	ret := &RPCResObj{}
-	fmt.Println(string(responseBytes))
 	if err := json.Unmarshal(responseBytes, ret); err != nil {
 		return nil, err
 	}
